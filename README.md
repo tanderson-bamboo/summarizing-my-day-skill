@@ -30,11 +30,15 @@ The skill reads from these sources for the window:
 - **Slack** *(optional, only if enabled in setup)* — your sent messages across all channel
   types and the DMs you received, filtered to work-related action items. *Source:* the Slack
   MCP, using your `slack.userId` (remote; reads DMs and private channels).
+- **Google Calendar** *(optional, only if enabled in setup)* — your accepted meetings in the
+  window, plus the Google Doc notes attached to those events (read via the Google Drive MCP).
+  Used to add a Meetings list for context and to extract your action items. *Source:* the
+  Google Calendar and Google Drive MCPs (remote; skipped if disabled or not connected).
 
 The first three (git, shell, Claude transcripts) are gathered locally by `gather.sh` with no
-network calls; JIRA and Slack are remote MCP queries. The skill writes only to the
-`## Work Summary` section of today's daily note, posts nothing to Slack, and posts nothing to
-JIRA without your explicit confirmation.
+network calls; JIRA, Slack, and Calendar are remote MCP queries. The skill writes only to the
+`## Work Summary` and `## Action Items` sections of today's daily note, posts nothing to Slack,
+and posts nothing to JIRA without your explicit confirmation.
 
 ## Install
 
@@ -65,6 +69,9 @@ The first run (or any run with an incomplete config) walks you through setup and
   `~/.claude/projects`).
 - **JIRA cloud id** — resolved from your connected Atlassian MCP. If you have no Atlassian
   MCP, leave it empty and the skill runs in note-only mode (no JIRA).
+- **Google Calendar** (optional) — enable to include your accepted meetings and their attached
+  Google Doc notes. Requires the Google Calendar MCP (and the Google Drive MCP to read notes).
+  Leave it off to skip calendar entirely.
 
 To reconfigure later, say "reconfigure summarize".
 
@@ -87,6 +94,13 @@ The phrase sets the **start** of the window. A couple of behaviors to know:
   weekly summary, your next plain "since last run" starts from that weekly run, not from where
   it would have otherwise. Override windows are ad-hoc, not a saved daily/weekly mode.
 
+
+## Action items
+
+When Slack or Calendar is enabled, the skill collects action items assigned to you — from
+meeting notes and Slack follow-ups — into a single `## Action Items` section in the daily
+note, each tagged with its source. They're written to the note and surfaced for your review;
+nothing is auto-created (no tickets, no tasks).
 
 ## The JIRA confirm-gate
 
