@@ -28,16 +28,16 @@ The skill reads from these sources for the window:
   plus details for tickets referenced in the above. *Source:* the Atlassian MCP, using
   `jiraCloudId` from config (remote; skipped if empty).
 - **Slack** *(optional, only if enabled in setup)* — your sent messages across all channel
-  types and the DMs you received, filtered to work-related action items. *Source:* the Slack
+  types and the DMs you received, filtered to work-related to-do items. *Source:* the Slack
   MCP, using your `slack.userId` (remote; reads DMs and private channels).
 - **Google Calendar** *(optional, only if enabled in setup)* — your accepted meetings in the
   window, plus the Google Doc notes attached to those events (read via the Google Drive MCP).
-  Used to add a Meetings list for context and to extract your action items. *Source:* the
+  Used to add a Meetings list for context and to extract your to-do items. *Source:* the
   Google Calendar and Google Drive MCPs (remote; skipped if disabled or not connected).
 
 The first three (git, shell, Claude transcripts) are gathered locally by `gather.sh` with no
 network calls; JIRA, Slack, and Calendar are remote MCP queries. The skill writes only to the
-`## Work Summary` and `## Action Items` sections of today's daily note, posts nothing to Slack,
+`## Work Summary` and `## To-Do Items` sections of today's daily note, posts nothing to Slack,
 and posts nothing to JIRA without your explicit confirmation.
 
 ## Install
@@ -95,12 +95,21 @@ The phrase sets the **start** of the window. A couple of behaviors to know:
   it would have otherwise. Override windows are ad-hoc, not a saved daily/weekly mode.
 
 
-## Action items
+## To-Do items
 
-When Slack or Calendar is enabled, the skill collects action items assigned to you — from
-meeting notes and Slack follow-ups — into a single `## Action Items` section in the daily
-note, each tagged with its source. They're written to the note and surfaced for your review;
-nothing is auto-created (no tickets, no tasks).
+When Slack or Calendar is enabled, the skill collects to-do items assigned to you — from
+meeting notes and Slack follow-ups — into a single `## To-Do Items` section in the daily
+note, each tagged with its source. They're written as Obsidian checkboxes so you can tick
+them off in place:
+
+```
+## To-Do Items
+- [ ] Send the migration timeline to Dana — *(meeting: Platform sync)*
+- [ ] Get the NYA PR up — *(Slack)*
+```
+
+They're surfaced for your review; nothing is auto-created (no tickets, no tasks), and later
+runs append new items without touching the boxes you've already checked.
 
 ## The JIRA confirm-gate
 

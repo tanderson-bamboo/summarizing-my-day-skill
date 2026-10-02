@@ -59,7 +59,7 @@ Run when the setup-complete test fails, or when the user asks to reconfigure
    each run." If yes → call `list_calendars`. One calendar → use it; multiple → ask which;
    default `primary`. Set `calendar.enabled` true and `calendar.calendarId` to the chosen id.
    Then confirm the Google Drive MCP is connected: if it is not, keep `calendar.enabled` true
-   but warn that the meetings list will work while notes/action-items are skipped until Drive
+   but warn that the meetings list will work while notes/to-do-items are skipped until Drive
    is connected. If no, or the Google Calendar MCP is not connected → set `calendar.enabled`
    false.
 6. Read the existing config first if present and carry its `lastRun` forward; then write the
@@ -96,11 +96,11 @@ Run when the setup-complete test fails, or when the user asks to reconfigure
      search). For each attached Google Doc, read it via the Google Drive MCP
      (`read_file_content`). If the Drive MCP is unavailable, list the meetings but skip notes
      and note "meeting notes skipped (Drive unavailable)".
-   - From each note, extract **action items assigned to the user** (their name / "Trevor" /
+   - From each note, extract **to-do items assigned to the user** (their name / "Trevor" /
      clear first-person commitments), conservatively — when unsure, drop the item. Tag each
-     with its meeting title for the unified Action Items section (see "Action items").
+     with its meeting title for the unified To-Do Items section (see "To-Do items").
    - Add any JIRA ticket IDs found in the notes to the evidence ticket IDs from steps 2–3.
-   - Keep the labeled meetings list and action items for steps 6 and 9.
+   - Keep the labeled meetings list and to-do items for steps 6 and 9.
 5. **Pull JIRA activity** (Atlassian MCP) using `jiraCloudId` from config. If `jiraCloudId`
    is empty, skip this step and note that JIRA was skipped (suggest running setup).
    - JQL: `assignee = currentUser() AND updated >= "<YYYY-MM-DD>"`.
@@ -108,16 +108,16 @@ Run when the setup-complete test fails, or when the user asks to reconfigure
 6. **Synthesize** a first-person summary: **Shipped / In progress / Explored**. Read the
    specific Claude transcripts gather listed only as needed — skim, never dump them. Using the
    labeled Slack list from step 3, fold completions into the Shipped / In progress / Explored
-   bullets and collect follow-ups for the unified `## Action Items` list (see "Slack filtering").
+   bullets and collect follow-ups for the unified `## To-Do Items` list (see "Slack filtering").
    Fold the attended meetings into the summary as context (a short Meetings list under
-   `## Work Summary`). Collect action items from meeting notes and Slack follow-ups into the
-   unified `## Action Items` list (see "Action items"), each tagged with its source.
+   `## Work Summary`). Collect to-do items from meeting notes and Slack follow-ups into the
+   unified `## To-Do Items` list (see "To-Do items"), each tagged with its source.
 7. **Write the daily note** (see "Daily note" below).
 8. **Candidate tickets** = evidence IDs ∪ assigned tickets clearly reflected in the work.
    Draft a brief (2–4 sentence) first-person status comment for each.
 9. **STOP and present.** Show the summary, then a table: `Ticket | Evidence | Draft comment`.
    Ask which to post: all / a subset / edit text / none.
-   Also show the unified `## Action Items` list (all sources) for the user's review. These are
+   Also show the unified `## To-Do Items` list (all sources) for the user's review. These are
    written to the note and flagged only — never auto-created anywhere. This is separate from
    the JIRA confirm-gate below.
 10. **Only after explicit confirmation**, post chosen comments via `addCommentToJiraIssue`.
@@ -131,26 +131,34 @@ unsure, drop it:
 - **Work-related completion** (e.g. "Approved. Does it need QA?", "merged the fix") → fold into
   **Shipped / In progress / Explored** alongside git/JIRA evidence.
 - **Work commitment or open todo** (e.g. "I'll get the NYA PR up today"; a request the user
-  clearly accepted or acted on) → add to the unified **`## Action Items`** section (see
-  "Action items"), tagged `(Slack)`.
+  clearly accepted or acted on) → add to the unified **`## To-Do Items`** section (see
+  "To-Do items"), tagged `(Slack)`.
 - **Drop**: personal/social ("I'll go to that taco place"), banter, "lol", pure FYI with no
   action, a request addressed to the user without their clear acceptance or action in the
   window, and anything ambiguous or not work-related.
 
-## Action items
+## To-Do items
 
-A single `## Action Items` section in the daily note collects action items from **every**
+A single `## To-Do Items` section in the daily note collects to-do items from **every**
 source that produces them — meeting notes and Slack follow-ups — with the source tagged
-inline. Extract conservatively; when unsure whether an item is the user's, drop it. Format:
+inline. Extract conservatively; when unsure whether an item is the user's, drop it.
+
+Every item is a bulleted **Obsidian checkbox** — the line format is exactly
+`- [ ] Item text`, with an unchecked box (a space between the brackets), one item per line,
+and the source tag appended:
 
 ```
-## Action Items
-- Send the migration timeline to Dana — *(meeting: Platform sync)*
-- Get the NYA PR up — *(Slack)*
+## To-Do Items
+- [ ] Send the migration timeline to Dana — *(meeting: Platform sync)*
+- [ ] Get the NYA PR up — *(Slack)*
 ```
+
+The `- [ ] ` prefix is required on every item so Obsidian renders it as a real task
+checkbox. Never write a to-do item as a plain `- ` bullet, and never pre-check a box (`- [x]`)
+— the user checks items off themselves.
 
 Items are written to the note and surfaced at the STOP-and-present step for review. They are
-never auto-created anywhere (no JIRA tickets, no Todoist tasks). If there are no action items
+never auto-created anywhere (no JIRA tickets, no Todoist tasks). If there are no to-do items
 from any source, omit the section entirely.
 
 ## Daily note
@@ -158,19 +166,19 @@ from any source, omit the section entirely.
 - Path: `<dailyNotesDir>/<today, formatted per noteFilename>` (format tokens follow
   strftime/moment.js conventions: `YYYY` 4-digit year, `MM` month, `DD` day).
 - Never overwrite the file or touch sections other than the managed sections
-  `## Work Summary` and `## Action Items`.
+  `## Work Summary` and `## To-Do Items`.
 - **File doesn't exist:** create it with `# <Weekday, Month Dayth, Year>`
   (e.g. `# Friday, June 5th, 2026`), then a `## Work Summary` section holding the summary.
 - **File exists, `## Work Summary` absent:** append the `## Work Summary` section.
 - **File exists, `## Work Summary` present (e.g. an earlier run today):** append a new
   `### <h:mmam/pm>` sub-block under it; do not replace earlier sub-blocks.
-- **`## Action Items`** is managed with the same discipline as `## Work Summary`, and only
-  written when there are action items:
-  - File/section absent → create/append the `## Action Items` section.
+- **`## To-Do Items`** is managed with the same discipline as `## Work Summary`, and only
+  written when there are to-do items:
+  - File/section absent → create/append the `## To-Do Items` section.
   - Section present (earlier run today) → append new items under it; do not replace existing
-    items.
+    items, and never change the checked state of an item already in the file.
   - When creating a brand-new file, order the sections: title, then `## Work Summary`, then
-    `## Action Items`.
+    `## To-Do Items`.
 
 ## The hard rule — JIRA
 
@@ -189,9 +197,9 @@ from any source, omit the section entirely.
 - `jiraCloudId` empty → skip the JIRA steps; note it in the output.
 - `slack.enabled` false / `slack.userId` empty / Slack MCP unavailable → skip Slack; note it.
 - `calendar.enabled` false / Google Calendar MCP unavailable → skip Calendar; note it.
-- Calendar on but Google Drive MCP unavailable → list meetings, skip notes/action-items; note it.
-- No accepted meetings in window → no Meetings list and no meeting-sourced action items.
-- No action items from any source → omit the `## Action Items` section entirely.
+- Calendar on but Google Drive MCP unavailable → list meetings, skip notes/to-do-items; note it.
+- No accepted meetings in window → no Meetings list and no meeting-sourced to-do items.
+- No to-do items from any source → omit the `## To-Do Items` section entirely.
 - First run after setup → midnight-today window; announce the fallback.
 
 ## Common mistakes
@@ -202,5 +210,7 @@ from any source, omit the section entirely.
 - Including non-work Slack chatter → filter conservatively; drop if unsure.
 - Writing `lastRun` early → write it last (step 11).
 - Including declined/all-day/solo calendar events → keep only accepted meetings with attendees.
-- Listing action items not assigned to the user → extract conservatively; drop if unsure.
-- Auto-creating tasks/tickets from action items → only write them to the note and surface them.
+- Listing to-do items not assigned to the user → extract conservatively; drop if unsure.
+- Auto-creating tasks/tickets from to-do items → only write them to the note and surface them.
+- Writing to-do items as plain bullets → every item needs the `- [ ] ` Obsidian checkbox prefix.
+- Re-checking or unchecking existing items → append only; leave the user's boxes alone.
